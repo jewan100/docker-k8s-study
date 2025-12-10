@@ -1,0 +1,49 @@
+# version: "3.8" # 예전 Compose 파일 포맷 버전, Docker Compose V2 플러그인 기준으로는 생략 가능함
+
+services: # 서비스 정의 시작
+  mongodb: # 서비스(컨테이너) 이름
+    image: "mongo"
+    volumes:
+      - data:/data/db # named volume 'data'를 컨테이너의 /data/db에 마운트 (호스트 경로는 Docker가 관리)
+    # environment:
+    # - MONGO_INITDB_ROOT_USERNAME=value
+    # - MONGO_INITDB_ROOT_USERNAME: jewan
+    # - MONGO_INITDB_ROOT_PASSWORD: jewan
+    env_file:
+      - ./env/mongo.env # 환경변수 파일 지정
+    # networks:
+    #   - goals-net
+    # Docker Compose v2부터는 기본 네트워크가 자동 생성되므로 명시적으로 네트워크를 지정하지 않아도 됨
+  backend:
+    # image: ''
+    # build:
+    #   context: ./backend # Dockerfile이 위치한 디렉토리
+    #   dockerfile: Dockerfile # 사용할 Dockerfile 이름
+    build: ./backend # context와 dockerfile이 기본값일 때 간단히 표현 가능
+    ports:
+      - "80:80" # 호스트:컨테이너
+    volumes:
+      - logs:/app/logs # named volume 'logs'를 컨테이너의 /app/logs에 마운트
+      - ./backend:/app # 호스트의 backend 디렉토리를 컨테이너의 /app 디렉토리에 마운트
+      - /app/node_modules # 호스트 경로를 지정하지 않고, Docker가 관리하는 익명 볼륨을 /app/node_modules에 마운트
+    env_file:
+      - ./env/backend.env # 환경변수 파일 지정
+    depends_on:
+      - mongodb # mongodb 컨테이너를 먼저 시작하도록 설정하는 의존 관계 (DB 준비 상태까지 보장하진 않음)
+
+  frontend:
+    # container_name: frontend # 컨테이너 이름 지정
+    build: ./frontend
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./frontend/src:/app/src
+    stdin_open: true # 대화형 터미널 사용 가능 -i 옵션과 동일한 효과
+    tty: true # 터미널 세션 유지 -t 옵션과 동일한 효과
+    depends_on:
+      - backend
+
+volumes:
+  # named volume만 정의, 컨테이너가 삭제되더라도 데이터가 유지되도록 하기 위해
+  data:
+  logs:
