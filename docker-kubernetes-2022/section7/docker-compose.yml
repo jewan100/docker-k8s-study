@@ -1,0 +1,7 @@
+services:
+  npm:
+    build: ./
+    stdin: true
+    tty: true
+    volumes:
+      - ./:/app
