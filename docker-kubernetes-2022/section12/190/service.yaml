@@ -1,0 +1,15 @@
+apiVersion: v1
+kind: Service # 생성할 리소스 타입, 여기서는 Service
+metadata:
+  name: backend # Service 이름 (DNS 이름으로도 사용됨)
+spec:
+  selector:
+    app: my-app # 라벨이 app=my-app인 Pod로 트래픽 전달
+  ports:
+    - protocol: TCP # 사용할 L4 프로토콜 (기본값은 TCP)
+      port: 80 # Service가 노출하는 포트 (클라이언트가 접근하는 포트)
+      targetPort: 8080 # 실제 Pod 컨테이너가 리슨하는 포트
+    # - protocol: TCP
+    #   port: 443         # HTTPS 등 추가 포트를 열고 싶을 때 사용 가능
+    #   targetPort: 8443  # 컨테이너 내부의 실제 리슨 포트
+  type: LoadBalancer # Service 타입 (ClusterIP, NodePort, LoadBalancer 등)

@@ -1,0 +1,45 @@
+apiVersion: v1
+kind: Service # 생성할 리소스 타입, 여기서는 Service
+metadata:
+  name: backend # Service 이름 (DNS 이름으로도 사용됨)
+spec:
+  selector:
+    app: my-app # 라벨이 app=my-app인 Pod로 트래픽 전달
+  ports:
+    - protocol: TCP # 사용할 L4 프로토콜 (기본값은 TCP)
+      port: 80 # Service가 노출하는 포트 (클라이언트가 접근하는 포트)
+      targetPort: 8080 # 실제 Pod 컨테이너가 리슨하는 포트
+    # - protocol: TCP
+    #   port: 443         # HTTPS 등 추가 포트를 열고 싶을 때 사용 가능
+    #   targetPort: 8443  # 컨테이너 내부의 실제 리슨 포트
+  type: LoadBalancer # Service 타입 (ClusterIP, NodePort, LoadBalancer 등)
+
+---
+apiVersion: apps/v1
+kind: Deployment # 생성할 리소스의 종류(타입), 여기서는 Deployment
+metadata:
+  name: my-app-deployment # Deployment 이름
+  labels:
+    group: example # Deployment에 부여할 메타데이터 라벨
+spec:
+  replicas: 1 # 유지할 Pod 개수(레플리카 수)
+  selector: # 이 Deployment가 관리할 Pod를 찾는 기준(셀렉터)
+    matchLabels:
+      app: my-app # 라벨이 app=my-app인 Pod 선택
+      tier: backend # 라벨이 tier=backend인 Pod 선택
+  template: # selector에 매칭될 Pod 템플릿 정의
+    metadata:
+      labels:
+        app: my-app # 생성되는 Pod에 부여할 라벨
+        tier: backend # selector와 일치하도록 tier 라벨도 부여
+    spec: # Pod 스펙 정의
+      containers: # Pod 안에 포함될 컨테이너 목록
+        - name: my-node # 컨테이너 이름
+          image: jewan100/kub-first-app:2 # 사용할 컨테이너 이미지
+          imagePullPolicy: Always # 항상 레지스트리에서 이미지를 다시 pull
+          livenessProbe: # 컨테이너 생존 여부를 주기적으로 체크하는 프로브
+            httpGet: # HTTP GET 방식으로 헬스 체크 수행
+              path: / # 헬스 체크 요청을 보낼 경로
+              port: 8080 # 헬스 체크 요청을 보낼 컨테이너 포트
+            periodSeconds: 10 # 헬스 체크 주기(초)
+            initialDelaySeconds: 5 # 컨테이너 시작 후 첫 체크까지 대기 시간(초)
