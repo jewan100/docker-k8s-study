@@ -1,0 +1,37 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: story-deployment
+spec:
+  replicas: 2 # 유지할 Pod 개수(레플리카 수)
+  selector:
+    matchLabels:
+      app: story
+  template:
+    metadata:
+      labels:
+        app: story
+    spec:
+      containers:
+        - name: story # 컨테이너 이름
+          image: jewan100/kub-data-demo:1 # 사용할 컨테이너 이미지
+          env:
+            - name: STORY_FOLDER # 애플리케이션에서 사용할 폴더 경로 환경 변수 이름
+              # value: story
+              valueFrom:
+                configMapKeyRef: # ConfigMap에서 특정 키를 읽어 환경 변수로 주입
+                  name: data-story-env # 참조할 ConfigMap 이름
+                  key: folder # ConfigMap 내 키 이름
+          volumeMounts:
+            - mountPath: /app/story # 컨테이너 내부에서 볼륨이 마운트될 경로
+              name: story-volume # 아래 volumes 섹션의 볼륨 이름과 일치해야 함
+      volumes:
+        - name: story-volume # Pod에 마운트할 볼륨 이름
+          # emptyDir: {} # 볼륨 종류(빈 디렉터리), 같은 Pod 내 컨테이너끼리 공유, Pod 간 공유 불가
+
+          # hostPath: # 볼륨 종류(호스트 경로), 같은 노드에 스케줄된 Pod끼리만 실질적으로 공유 가능한 구조
+          #   path: /data # 노드(호스트)의 실제 디렉터리 경로
+          #   type: DirectoryOrCreate # 디렉터리가 없으면 자동 생성
+
+          persistentVolumeClaim: # 볼륨 종류(PersistentVolumeClaim), PVC가 가리키는 PV를 Pod에 마운트
+            claimName: host-pvc # 사용할 PersistentVolumeClaim 이름

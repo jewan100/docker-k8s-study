@@ -1,0 +1,7 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: data-story-env
+data:
+  # key: value 형태로 설정 데이터 정의
+  folder: story # STORY_FOLDER 환경 변수로 주입할 폴더 이름
