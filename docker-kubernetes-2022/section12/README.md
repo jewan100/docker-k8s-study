@@ -200,9 +200,9 @@ kubectl rollout undo deployment/first-app --to-revision=1
 - `kubectl` 명령을 직접 실행해 리소스를 생성, 수정, 삭제하는 방식
 - 예시
 
-  - `kubectl create deployment ...` 명령
-  - `kubectl expose deployment ...` 명령
-  - `kubectl scale deployment ...` 명령
+  - `kubectl create deployment ...`
+  - `kubectl expose deployment ...`
+  - `kubectl scale deployment ...`
 
 장점
 
@@ -220,8 +220,8 @@ kubectl rollout undo deployment/first-app --to-revision=1
 - YAML 파일에 “원하는 상태”를 정의하고 `kubectl apply`로 적용하는 방식
 - 예시
 
-  - `kubectl apply -f deployment.yaml` 명령
-  - `kubectl apply -f service.yaml` 명령
+  - `kubectl apply -f deployment.yaml`
+  - `kubectl apply -f service.yaml`
 
 특징
 
