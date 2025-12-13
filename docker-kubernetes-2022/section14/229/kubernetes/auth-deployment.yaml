@@ -1,0 +1,17 @@
+apiVersion: apps/v1 # 이 리소스가 속한 API 그룹과 버전 (Deployment는 apps/v1 사용)
+kind: Deployment # 생성할 리소스 타입, 여기서는 Deployment
+metadata:
+  name: auth-deployment # Deployment 이름 (kubectl get deployment 시 표시되는 이름)
+spec:
+  replicas: 1 # 유지할 Pod 개수(레플리카 수)
+  selector: # 이 Deployment가 관리할 Pod를 찾는 기준(라벨 셀렉터)
+    matchLabels:
+      app: auth # 라벨이 app=auth 인 Pod를 이 Deployment가 관리
+  template: # selector에 매칭될 Pod 템플릿 정의
+    metadata:
+      labels:
+        app: auth # 생성되는 Pod에 부여할 라벨 (위 selector와 일치해야 함)
+    spec: # Pod 스펙 정의
+      containers: # Pod 안에 포함될 컨테이너 목록
+        - name: auth # 컨테이너 이름
+          image: jewan100/kub-demo-auth:latest # 사용할 컨테이너 이미지 (Docker Hub 기준)

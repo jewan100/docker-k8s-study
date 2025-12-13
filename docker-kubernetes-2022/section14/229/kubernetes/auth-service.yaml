@@ -1,0 +1,12 @@
+apiVersion: v1 # Service 리소스는 core API 그룹 v1 사용
+kind: Service # 생성할 리소스 타입, 여기서는 Service
+metadata:
+  name: auth-service # Service 이름 (DNS 이름, kubectl get service 시 표시)
+spec:
+  selector:
+    app: auth # 라벨이 app=auth 인 Pod를 뒤에서 대상으로 삼는 Service
+  type: ClusterIP # 기본 Service 타입, 클러스터 내부에서만 접근 가능한 내부용 엔드포인트
+  ports:
+    - protocol: TCP # L4 프로토콜 (기본은 TCP)
+      port: 80 # Service가 노출하는 포트 (다른 Pod, Service가 접근할 포트)
+      targetPort: 80 # 실제 Pod 컨테이너 애플리케이션 포트

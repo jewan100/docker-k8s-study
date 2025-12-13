@@ -1,0 +1,17 @@
+# users-service.
+apiVersion: v1
+kind: Service
+metadata:
+  name: users-service # Service 이름
+spec:
+  selector:
+    app: users # 라벨이 app=users 인 Pod를 뒤에서 대상 그룹으로 삼음
+  type:
+    LoadBalancer # 주요 Service 타입 중 하나 (ClusterIP, NodePort, LoadBalancer)
+    # - ClusterIP: 클러스터 내부 전용
+    # - NodePort: 각 노드 IP:포트로 외부 접근 허용
+    # - LoadBalancer: 클라우드 로드밸런서와 연계(로컬에서는 minikube service 등으로 접근)
+  ports:
+    - protocol: TCP # L4 프로토콜
+      port: 8080 # 클라이언트가 접속하는 Service 포트
+      targetPort: 8080 # users 컨테이너가 실제 리슨하는 포트

@@ -1,0 +1,30 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: users-deployment # Deployment 이름
+spec:
+  replicas: 1 # 유지할 users Pod 개수
+  selector:
+    matchLabels:
+      app: users # 라벨이 app=users 인 Pod만 이 Deployment가 관리
+  template:
+    metadata:
+      labels:
+        app: users # 새로 생성되는 Pod에 부여되는 라벨
+    spec:
+      containers:
+        - name: users # 컨테이너 이름
+          image: jewan100/kub-demo-users:latest # 사용할 컨테이너 이미지
+          env:
+            - name: AUTH_ADDRESS
+              # value: localhost
+              #   - localhost는 같은 Pod 안에 auth 컨테이너가 함께 있을 때만 유효
+              # value: 10.109.214.64
+              #   - auth-service의 ClusterIP를 직접 하드코딩한 예시
+              #   - Kubernetes는 AUTH_SERVICE_SERVICE_HOST 환경 변수에 이 값을 자동 주입
+              #   - IP 하드코딩은 변경/재배포 시 깨질 수 있으므로 권장하지 않음
+              value: auth-service.default
+              #   - 권장 방식: Service DNS 이름 사용
+              #   - auth-service.default.svc.cluster.local 의 축약형
+              #   - <서비스이름>.<네임스페이스> 형식
+              #   - CoreDNS가 이 이름을 auth-service의 ClusterIP로 resolve

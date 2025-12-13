@@ -1,0 +1,26 @@
+apiVersion: apps/v1 # Deployment는 apps/v1 API 그룹 사용
+kind: Deployment
+metadata:
+  name: tasks-deployment # Deployment 이름
+spec:
+  replicas: 1 # 유지할 tasks Pod 개수
+  selector:
+    matchLabels:
+      app: tasks # 라벨이 app=tasks 인 Pod를 이 Deployment가 관리
+  template:
+    metadata:
+      labels:
+        app: tasks # 생성되는 Pod에 부여되는 라벨
+    spec:
+      containers:
+        - name: tasks # 컨테이너 이름
+          image: jewan100/kub-demo-tasks:latest # 사용할 컨테이너 이미지
+          env: # 컨테이너에 주입할 환경 변수 목록
+            - name: AUTH_ADDRESS # tasks 서비스가 auth 서비스에 요청할 때 사용할 주소
+              value: auth-service.default
+              # value: auth-service.default
+              #   - Service DNS 이름(auth-service.default.svc.cluster.local)의 축약형
+              #   - <서비스이름>.<네임스페이스> 형식
+              #   - CoreDNS가 이 이름을 auth-service의 ClusterIP로 resolve
+            - name: TASKS_FOLDER # 애플리케이션에서 사용할 작업 폴더 이름
+              value: tasks # 예: /app/tasks 등 내부 경로를 조합하는 데 사용
