@@ -23,7 +23,7 @@
   - `kubectl` 명령, Dashboard, 다른 컴포넌트 요청의 종착지
 
 - 인증, 인가, Admission Webhook 등을 거친 후 etcd에 읽기, 쓰기 수행
-- Control Plane의 “프론트 도어” 역할
+- Control Plane의 “프론트 도어” 역할z
 
 ### kube-controller-manager
 
@@ -189,3 +189,132 @@
 
     - `--dry-run=client` 실제 생성 없이 클라이언트에서만 검증
     - `-o yaml` YAML 출력 후 파일로 리다이렉트
+
+### Service
+
+> Pod 집합에 대해 안정적인 접속 지점(가상 IP, DNS 이름) 을 제공하는 객체
+
+- Pod 앞단에서 트래픽을 받아주는 추상화 계층 역할
+- 내부 Pod IP 변경, 스케일 인·아웃을 숨기고 항상 동일 엔드포인트 제공 구조
+- 포트 기반 통신 및 로드 밸런싱 제공 구조
+- MSA 간 서비스 이름 기반 호출을 가능하게 하는 느슨한 결합 구조
+- 외부 사용자 요청과 내부 Pod 사이를 중계하는 브릿지 역할
+
+주요 타입
+
+- ClusterIP
+- NodePort
+- LoadBalancer
+
+#### NodePort
+
+> 각 Node의 특정 포트를 열어 외부에서 직접 접근할 수 있게 하는 Service 타입
+
+- 모든 Node IP에 동일한 NodePort를 개방하는 구조
+- 외부에서 `http://<노드IP>:<NodePort>` 형태로 접근하는 방식
+- 클라우드 로드밸런서 없이도 테스트용 외부 접근을 구성할 때 유용한 타입
+- 실제 트래픽 라우팅은 kube-proxy가 iptables 또는 IPVS 룰로 처리하는 구조
+
+#### ClusterIP
+
+> 클러스터 내부에서만 사용 가능한 기본 Service 타입
+
+- Service 전용 가상 IP(ClusterIP) 부여 구조
+- 다른 Pod가 `ClusterIP:Port` 또는 Service DNS 이름으로 접근하는 내부 엔드포인트 역할
+- Pod IP는 재시작·스케일링에 따라 바뀌므로 직접 사용하지 않고 Service를 통해 간접 접근하는 구조
+- 특정 라벨 셀렉터에 매칭되는 Pod들을 하나의 백엔드 풀로 그룹화하는 로드밸런서 역할
+
+예시
+
+```bash
+kubectl get service
+NAME            TYPE           CLUSTER-IP       EXTERNAL-IP   PORT(S)          AGE
+auth-service    ClusterIP      10.109.214.64    <none>        80/TCP           2m4s
+kubernetes      ClusterIP      10.96.0.1        <none>        443/TCP          40h
+users-service   LoadBalancer   10.109.194.160   <pending>     8080:31344/TCP   17h
+```
+
+- `auth-service`
+
+  - TYPE: ClusterIP
+  - CLUSTER-IP: 10.109.214.64
+  - 클러스터 내부 Pod에서만 접근 가능한 내부 엔드포인트 역할
+
+#### LoadBalancer
+
+> 클라우드 프로바이더의 L4 로드밸런서와 연계되는 Service 타입
+
+- 지원 클라우드 프로바이더(GKE, EKS, AKS 등) 환경에서만 실제 외부 IP 할당 가능한 타입
+- Service 생성 시 클라우드 로드밸런서 리소스가 자동 생성되는 구조
+- 외부 사용자는 로드밸런서의 공인 IP 또는 도메인으로 접속하는 구조
+- 로컬(minikube 등)에서는 실제 L4 로드밸런서가 없으므로 `minikube service <서비스명>` 명령으로 프록시를 통해 접속하는 패턴 사용
+
+---
+
+### Namespace
+
+> 하나의 클러스터를 논리적으로 나누기 위한 가상 공간
+
+- 리소스 이름 충돌 방지를 위한 논리적 구분 단위
+- 팀, 환경(dev, stage, prod)별 리소스 분리를 위한 스코프 단위
+- ResourceQuota, LimitRange, RBAC 등 정책을 네임스페이스 단위로 적용하는 관리 단위
+
+쿠버네티스가 기본 제공하는 대표 네임스페이스
+
+- `default`
+
+  - 별도 네임스페이스를 지정하지 않았을 때 사용되는 기본 공간
+
+- `kube-system`
+
+  - kube-dns(CoreDNS), kube-proxy 등 시스템 컴포넌트가 배치되는 공간
+
+- `kube-public`
+
+  - 클러스터 전체에서 읽기 가능한 공개 정보 저장용 공간
+
+- `kube-node-lease`
+
+  - 노드 heartbeat(리스 정보)를 관리하기 위한 내부용 공간
+
+#### DNS와 Namespace
+
+Service와 Pod는 네임스페이스를 포함한 DNS 이름으로 접근 가능
+
+- FQDN 패턴
+
+```text
+<service-name>.<namespace>.svc.cluster.local
+```
+
+예시
+
+```yaml
+mysql.connect("db-service.dev.svc.cluster.local")
+```
+
+- `serviceName = db-service`
+
+  - Service 이름
+
+- `namespace = dev`
+
+  - dev 네임스페이스에 존재하는 Service 의미
+
+- `svc`
+
+  - Service를 의미하는 고정 서브도메인
+
+- `cluster.local`
+
+  - 클러스터 내부 도메인 이름(기본값, 클러스터 설정에 따라 변경 가능 값)
+
+축약 형태
+
+- 같은 네임스페이스 내부 접근
+
+  - `db-service`
+
+- 네임스페이스까지 명시
+
+  - `db-service.dev`
