@@ -58,8 +58,6 @@
 - `spec.template.metadata.labels` (Pod 템플릿)
 - `spec.selector.matchLabels` (관리 대상 Pod 필터)
 
-이 셋이 헷갈리기 쉬운 지점입니다. 특히 `spec.selector.matchLabels` 와 `spec.template.metadata.labels` 는 반드시 일치해야
-
 예시
 
 ```yaml
